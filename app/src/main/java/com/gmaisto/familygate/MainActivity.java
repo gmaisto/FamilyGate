@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private class DownloadFamilyGateDataTask extends AsyncTask<String, Void, String> {
+    private class DownloadFamilyGateDataTask extends AsyncTask<String, Void, JSONObject> {
 
         private ProgressDialog progDailog;
 
@@ -128,16 +128,16 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected String doInBackground(String... urls) {
+        protected JSONObject doInBackground(String... urls) {
 
-            String result = "";
+            JSONObject result = null;
             try {
 
                 Webb webb = Webb.create();
                 result = webb
-                        .get("http://familygate.mooo.com:9886/fgdata")
+                        .get(Constants.FGDATA_URL)
                         .retry(5, true) // at most three retry, don't do exponential backoff
-                        .asString()
+                        .asJsonObject()
                         .getBody();
 
             } catch (WebbException exception) {
@@ -151,16 +151,13 @@ public class MainActivity extends AppCompatActivity {
             return result;
         }
 
-        protected void onPostExecute(String result) {
+        protected void onPostExecute(JSONObject result) {
             if (progDailog.isShowing()) {
                 progDailog.dismiss();
             }
-            if (!result.equals("")) {
-                Log.d("MyApp", "Received json  " + result);
+            if (result != null) {
                 try {
-                    JSONObject jObj = new JSONObject(result);
-
-                    String message = jObj.getString("message");
+                    String message = result.getString("message");
                     if (!message.equals("OK")) {
                         Toast.makeText(ctx,
                                 "Sistema non disponibile",
@@ -168,23 +165,23 @@ public class MainActivity extends AppCompatActivity {
                         finish();
                     }
 
-                    String temps = jObj.getString("temp").replaceAll("0+$", "").replaceAll("\\.$",".0");
+                    String temps = result.getString("temp").replaceAll("0+$", "").replaceAll("\\.$",".0");
 
 
                     temp.setText(temps + "°");
-                    lux.setText(jObj.getString("lux"));
-                    garage.setText(jObj.getString("light1"));
-                    if (jObj.getString("lstate").equals("0")) {
+                    lux.setText(result.getString("lux"));
+                    garage.setText(result.getString("light1"));
+                    if (result.getString("lstate").equals("0")) {
                         patio.setText("OFF");
                     } else {
                         patio.setText("ON");
                     }
-                    infomsg.setText(jObj.getString("lastseen"));
+                    infomsg.setText("Data updated on: " + Utils.getFormattedTime(result.getString("lastseen")));
 
                 } catch (JSONException exception) {
 
                     Toast.makeText(ctx,
-                            "Errore di ricezione: formato dati",
+                            "Errore di ricezione: formato dati non corretto",
                             Toast.LENGTH_SHORT).show();
                     finish();
 
