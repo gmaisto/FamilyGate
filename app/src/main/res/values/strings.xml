@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">FamilyGate</string>
+    <string name="temp_label">Temperatura</string>
+    <string name="temp_sample">13.5°</string>
+    <string name="status_label">Illuminazione</string>
+    <string name="patio_label">Patio:</string>
+    <string name="sample_status_on">ON</string>
+    <string name="garage_label">Garage:</string>
+    <string name="sample_status_off">OFF</string>
+    <string name="lux_label">Livello Luce</string>
+    <string name="sample_lux_level">90</string>
+    <string name="sample_info_msg">Info Message</string>
+</resources>
