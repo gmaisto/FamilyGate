@@ -37,14 +37,11 @@ public class MainActivity extends AppCompatActivity {
     private TextView lux;
     private TextView infomsg;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-
 
         temp = (TextView) findViewById(R.id.textView);
         temp.setText("N/A");
@@ -62,34 +59,50 @@ public class MainActivity extends AppCompatActivity {
         infomsg = (TextView) findViewById(R.id.infoMessage);
         infomsg.setText("");
 
-        if (networkInfo == null || !networkInfo.isConnected()) {
-
-            AlertDialog.Builder alert = new AlertDialog.Builder(this);
-
-            alert.setTitle("FamilyGate");
-            alert.setMessage("Attenzione. Non è stata rilevata alcuna connessione alla rete.");
-
-            alert.setPositiveButton("Ok",
-                    new DialogInterface.OnClickListener() {
-                        public void onClick(DialogInterface dialog,
-                                            int whichButton) {
-                            finish();
-                        }
-                    });
-
-            alert.show();
+        if (!HaveNetworkConnectivity()) {
+            ConnectivityProblemDialog();
         } else {
-
             new DownloadFamilyGateDataTask().execute("");
-
         }
+    }
+
+
+    boolean HaveNetworkConnectivity() {
+        ConnectivityManager connMgr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+        if (networkInfo == null || !networkInfo.isConnected()) {
+            return false;
+        }
+        return true;
+    }
+
+    void ConnectivityProblemDialog() {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+
+        alert.setTitle("FamilyGate");
+        alert.setMessage("Attenzione. Non è stata rilevata alcuna connessione alla rete.\nImpossibile proseguire.");
+
+        alert.setPositiveButton("Ok",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog,
+                                        int whichButton) {
+                        //finish();
+                        dialog.cancel();
+                    }
+                });
+
+        alert.show();
     }
 
 
     @Override
     protected void onResume() {
         super.onResume();
-        new DownloadFamilyGateDataTask().execute("");
+        if (HaveNetworkConnectivity()) {
+            new DownloadFamilyGateDataTask().execute("");
+        } else {
+            ConnectivityProblemDialog();
+        }
     }
 
 
@@ -106,7 +119,11 @@ public class MainActivity extends AppCompatActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
+        if (HaveNetworkConnectivity()) {
             new DownloadFamilyGateDataTask().execute("");
+        } else {
+            ConnectivityProblemDialog();
+        }
             return true;
     }
 
@@ -144,7 +161,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(ctx,
                         "Errore di comunicazione con FamilyGate",
                         Toast.LENGTH_SHORT).show();
-                finish();
+                //finish();
             }
 
 
@@ -162,7 +179,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(ctx,
                                 "Sistema non disponibile",
                                 Toast.LENGTH_SHORT).show();
-                        finish();
+                        //finish();
                     }
 
                     String temps = result.getString("temp").replaceAll("0+$", "").replaceAll("\\.$",".0");
@@ -183,9 +200,14 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(ctx,
                             "Errore di ricezione: formato dati non corretto",
                             Toast.LENGTH_SHORT).show();
-                    finish();
+                  //  finish();
 
                 }
+            } else {
+                Toast.makeText(ctx,
+                        "Errore di ricezione: formato dati non corretto",
+                        Toast.LENGTH_SHORT).show();
+                //finish();
             }
         }
 
